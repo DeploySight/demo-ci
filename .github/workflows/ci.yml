@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint step
+        run: |
+          echo "Linting..."
+          sleep 3
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install deps
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i --silent
+      - name: Run tests
+        run: |
+          echo "Running tests on Node ${{ matrix.node-version }}"
+          sleep $((RANDOM % 6 + 4))
+
+  e2e-payments:
+    name: E2E payments (flaky by design)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Simulate E2E
+        run: |
+          echo "Running end to end checks"
+          sleep 8
+          # Fail about 20 percent of the time to generate signal
+          if [ $((RANDOM % 5)) -eq 0 ]; then
+            echo "Flaky failure to simulate reality"
+            exit 1
+          fi
+          echo "E2E passed"
